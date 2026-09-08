@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('spec',120)->nullable();
             $table->text('description')->nullable();
             
-            $table->unsignedBigInteger('cost_price')->default(0);
+            $table->unsignedBigInteger('cost_cents')->default(0);
             $table->unsignedBigInteger('price_cents')->default(0);
             $table->unsignedBigInteger('price_alt_cents')->default(0);
             $table->unsignedBigInteger('margin_pct')->default(25);

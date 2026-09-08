@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('cash_sessions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('business_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignId('opened_by')->nullable()->constrained('users');
-            $table->foreignId('closed_by')->nullable()->constrained('users');
+            $table->foreignId('business_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('opened_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('closed_by')->nullable()->constrained('users')->nullOnDelete();
 
             $table->timestamp('opened_at');
-            $table->timestamp('closed_At')->nullable();
+            $table->timestamp('closed_at')->nullable();
 
             $table->unsignedBigInteger('opening_cents')->default(0);
             $table->unsignedBigInteger('expected_cents')->default(0);

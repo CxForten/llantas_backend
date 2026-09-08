@@ -19,6 +19,8 @@ return new class extends Migration
             $table->unsignedInteger('sort_order')->default(0);
             $table->boolean('active')->default(true);
             $table->timestamps();
+
+            $table->unique(['business_id', 'name'], 'categories_business_name_unique');
         });
     }
 

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('business_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('sale_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('sale_id')->constrained()->restrictOnDelete();
 
             $table->string('type', 30)->default('factura');
             $table->string('estab', 3);
@@ -22,9 +22,9 @@ return new class extends Migration
             $table->string('sequential',9);
             $table->string('full_number', 20);
 
-            $table->string('access_key', 50)->nullable();
+            $table->string('access_key', 49)->nullable();
             $table->string('auth_number', 50)->nullable();
-            $table->timestamp('authouzed_at')->nullable();
+            $table->timestamp('authorized_at')->nullable();
 
             $table->string('status', 20)->default('pendiente');
 
@@ -37,6 +37,7 @@ return new class extends Migration
 
             $table->unique(['business_id', 'full_number'], 'documents_business_full_number_unique');
             $table->index(['business_id', 'status'], 'documents_business_status_idx');
+            $table->index(['status', 'attempts'], 'documents_retry_idx');
         });
     }
 

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('business_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
 
             $table->string('type', 20);
             $table->integer('qty');
@@ -29,7 +29,7 @@ return new class extends Migration
             $table->string('reason')->nullable();
             $table->timestamps();
 
-            $table->index(['business_id', 'product_id', 'user_id', 'created_at'], 'kardex_lookup_idx');
+            $table->index(['business_id', 'product_id', 'created_at'], 'kardex_lookup_idx');
         });
     }
 

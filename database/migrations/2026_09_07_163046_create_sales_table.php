@@ -14,15 +14,15 @@ return new class extends Migration
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
             $table->foreignId('business_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignId('cash_session_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignId('customer_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('cash_session_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('customer_id')->nullable()->constrained()->nullOnDelete();
             
             $table->string('number', 20);
-            $table->dateTime('sold_at')->nullable();
+            $table->timestamp('sold_at')->nullable();
 
             $table->string('customer_name')->default('Consumidor Final');
-            $table->string('customer_ident', 20)->default('9999999999999');
+            $table->string('customer_ident', 20)->default('9999999999');
             $table->string('customer_email')->nullable();
 
             $table->unsignedBigInteger('cost_total_cents')->default(0);
@@ -35,7 +35,7 @@ return new class extends Migration
             $table->unsignedBigInteger('business_income_cents')->default(0);
             $table->bigInteger('gross_margin_cents')->default(0);
 
-            $table->unsignedInteger('margin_ptc')->default(25);
+            $table->unsignedInteger('margin_pct')->default(25);
             $table->string('payment_method', 20)->default('efectivo');
             $table->string('doc_type', 30)->default('consumidor_final');
             $table->string('status', 20)->default('completada');
@@ -48,6 +48,7 @@ return new class extends Migration
 
             $table->unique(['business_id', 'number'], 'sales_business_number_unique');
             $table->index(['business_id', 'sold_at'], 'sales_business_date_idx');
+            $table->index(['cash_session_id', 'status'], 'sales_session_status_idx');
 
         });
     }

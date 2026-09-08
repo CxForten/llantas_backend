@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('sale_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('sale_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('product_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('product_id')->nullable()->constrained()-> nullOnDelete();
 
             $table->string('sku', 40);
             $table->string('name');
@@ -25,13 +25,14 @@ return new class extends Migration
             $table->integer('qty');
             $table->unsignedBigInteger('unit_cost_cents');
             $table->unsignedBigInteger('unit_price_cents');
-            $table->unsignedBigInteger('line_discount__cents')->default(0);
+            $table->unsignedBigInteger('line_discount_cents')->default(0);
             $table->unsignedInteger('iva_rate')->default(15);
             $table->unsignedBigInteger('iva_cents')->default(0);
             $table->unsignedBigInteger('line_total_cents');
 
             $table->timestamps();
             $table->index('sale_id');
+            $table->index(['category_name', 'spec'], 'sale_items_category_spec_idx');
         });
     }
 

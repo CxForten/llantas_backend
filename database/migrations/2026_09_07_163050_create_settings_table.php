@@ -18,6 +18,8 @@ return new class extends Migration
             $table->text('value')->nullable();
             $table->string('type', 20)->default('string');
             $table->timestamps();
+
+            $table->unique(['business_id', 'key'], 'settings_business_key_unique');
         });
     }
 

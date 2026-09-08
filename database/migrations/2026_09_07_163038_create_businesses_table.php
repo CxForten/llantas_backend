@@ -18,13 +18,13 @@ return new class extends Migration
             $table->string('address')->nullable();
             $table->string('phone', 20)->nullable();
             $table->string('email')->nullable();
-            $table->string('logo')->nullable();
+            $table->string('logo_path')->nullable();
 
             //datos para facturación electrónica
             $table->string('estab', 3)->default('001');
             $table->string('pto_emision', 3)->default('001');
             $table->unsignedBigInteger('next_invoice_seq')->default(1);
-            $table->string('sri_environment', 20)->default('prueba');
+            $table->string('sri_environment', 30)->default('pruebas');
 
             $table->boolean('active')->default(true);
             $table->timestamps();
