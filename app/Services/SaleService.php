@@ -132,11 +132,16 @@ class SaleService
             $sale->items()->createMany($lines);
 
             $received = (int) ($data['received_cents'] ?? $total);
+            
+            if($method === 'efectivo' && $received < $total){
+                throw new RuntimeException ('El monto recibido es menor al total de la venta');
+            }
+            
             $sale->payments()->create([
                 'method'            => $method,
                 'amount_cents'      => $total,
-                'received_cents'    =>$received,
-                'change_cents'    => max(0, $received - $total),
+                'received_cents'    => $received,
+                'change_cents'      => $received - $total,
                 'fee_cents'         => $cardFee,
             ]);
 
