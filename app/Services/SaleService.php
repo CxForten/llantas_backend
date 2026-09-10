@@ -34,7 +34,7 @@ class SaleService
                 throw new RuntimeException ('No hay una sesión de caja abierta');
             }
 
-            $marginPct = $data['margin_pct'] ?? null;
+            $marginPct = (int) (($data['margin_pct'] ?? null) ?: config('llantera.margin_main'));
             $lines = [];
             $subtotal = 0;
             $costTotal = 0;
@@ -51,7 +51,7 @@ class SaleService
                     throw new RuntimeException("Stock insuficiente de {$product->name}.");
                 }
 
-                $effectiveMargin = $margin_pct ?? $product->margin_pct ?: config ('llantera.margin_main'); 
+                $effectiveMargin = $marginPct ?: ($product->margin_pct ?: config('llantera.margin_main'));
                 $unitPrice = Money::withMargin($product->cost_cents, $effectiveMargin);
                 $lineTotal = $unitPrice * $qty;
                 $lineCost = $product->cost_cents * $qty;
@@ -92,18 +92,20 @@ class SaleService
 
             $overridden = false;
             $reason = null;
-            if (! empty($data['override_total_cents'])){
-                if (empty($data['override_reason'])){
-                    throw new RuntimeException('Deves escribir el motivo del cambio de total.');
+            if (isset($data['override_total_cents']) && $data['override_total_cents'] !== null) {
+            $total      = (int) $data['override_total_cents'];
+            $overridden = true;
+            $reason     = $data['override_reason'] ?? null;
+}
+                
+                $income = $total - $cardFee;
+                $margin = $income - $costTotal;
+                
+                $received = (int) ($data['received_cents'] ?? $total);
+                if($method === 'efectivo' && $received < $total){
+                    throw new RuntimeException ('El monto recibido es menor al total de la venta');
                 }
-                $total      = (int) $data['override_total_cents'];
-                $overridden = true;
-                $reason     = $data['override_reason'];
-            }
-
-            $income = $total - $cardFee;
-            $margin = $income - $costTotal;
-
+                
             $sale = Sale::create([
                 'business_id'           => $businessId,
                 'user_id'               => $userId,
@@ -131,11 +133,6 @@ class SaleService
 
             $sale->items()->createMany($lines);
 
-            $received = (int) ($data['received_cents'] ?? $total);
-            
-            if($method === 'efectivo' && $received < $total){
-                throw new RuntimeException ('El monto recibido es menor al total de la venta');
-            }
             
             $sale->payments()->create([
                 'method'            => $method,

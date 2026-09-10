@@ -25,7 +25,7 @@ class StoreSaleRequest extends FormRequest
             'received_cents' => ['nullable', 'integer', 'min:0'],
 
             'override_total_cents' => ['nullable', 'integer', 'min:0'],
-            'override_reason'      => ['nullable', 'string', 'max:255', 'required_with:override_total_cents'],
+            'override_reason'      => ['nullable', 'string', 'max:255'],
 
             'customer'       => ['nullable', 'array'],
             'customer.name'  => ['required_if:doc_type,factura', 'nullable', 'string', 'max:180'],
