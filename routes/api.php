@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\{
-    AuthController, ProductController, CategoryController,
+    AuthController, BackupController, ProductController, CategoryController,
     SaleController, CashSessionController, StockController,
     ReportController, SettingController, CustomerController
 };
@@ -39,4 +39,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('settings',  [SettingController::class, 'index']);
     Route::put('settings',  [SettingController::class, 'update']);
+
+    Route::get('backup/export', [BackupController::class, 'export']);
+    Route::post('backup/import', [BackupController::class, 'import']);
+    Route::post('backup/reset', [BackupController::class, 'reset']);
 });

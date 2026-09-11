@@ -37,13 +37,13 @@ class Product extends Model
         return $this->hasMany(StockMovement::class);
     }
 
-    public function recalculatePrices(): void
+    public function recalculatePrices(?int $main = null, ?int $alt = null): void
     {
-        $main = $this->margin_pct ?: config('llantera.margin_main');
-        $alt = config('llantera.margin_alt');
+        $main ??= $this->margin_pct ?: config('llantera.margin_main');
+        $alt  ??= config('llantera.margin_alt');
 
-        $this->price_cents =(int) round($this->cost_cents * (1 + $main / 100));
-        $this->price_alt_cents =(int) round($this->cost_cents * (1 + $alt / 100));
+        $this->price_cents     = (int) round($this->cost_cents * (1 + $main / 100));
+        $this->price_alt_cents = (int) round($this->cost_cents * (1 + $alt / 100));
     }
 
     public function scopeForBusiness($query, int $businessId)

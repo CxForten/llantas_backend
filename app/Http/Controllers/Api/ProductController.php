@@ -9,6 +9,7 @@ use App\Http\Resources\ProductResource;
 use App\Http\Resources\StockMovementResource;
 use App\Models\Product;
 use App\Services\StockService;
+use App\Support\BusinessSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -54,8 +55,12 @@ class ProductController extends Controller
         ]);
 
         // Si no mandan margen, usamos el de la configuración
-        $product->margin_pct = $data['margin_pct'] ?? config('llantera.margin_main');
-        $product->recalculatePrices();
+        $product->margin_pct = $data['margin_pct']?? BusinessSettings::int($request->user()->business_id, 'margin_main', 25);
+
+        $product->recalculatePrices(
+            BusinessSettings::int($request->user()->business_id, 'margin_main', 25),
+            BusinessSettings::int($request->user()->business_id, 'margin_alt', 20),
+        );
         $product->save();
 
         // El stock inicial entra por el kardex, nunca directo a la columna
@@ -95,7 +100,10 @@ class ProductController extends Controller
 
         // Si cambió el costo o el margen, recalculamos precios
         if ($product->isDirty(['cost_cents', 'margin_pct'])) {
-            $product->recalculatePrices();
+            $product->recalculatePrices(
+                BusinessSettings::int($request->user()->business_id, 'margin_main', 25),
+                BusinessSettings::int($request->user()->business_id, 'margin_alt', 20),
+            );
         }
 
         $product->save();

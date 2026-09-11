@@ -6,6 +6,7 @@ use App\Models\Sale;
 use App\Support\Money;
 use App\Models\CashSession;
 use App\Models\Product;
+use App\Support\BusinessSettings;
 use Illuminate\Support\Facades\DB;
 
 use RuntimeException;
@@ -30,11 +31,13 @@ class SaleService
             ->where('status', 'open')
             ->first();
 
-            if (! $session){
-                throw new RuntimeException ('No hay una sesión de caja abierta');
+            if (! $session && BusinessSettings::bool($businessId, 'require_cash_session', true)) {
+                throw new RuntimeException('No hay una sesión de caja abierta.');
             }
 
-            $marginPct = (int) (($data['margin_pct'] ?? null) ?: config('llantera.margin_main'));
+
+
+            $marginPct = (int) (($data['margin_pct'] ?? null) ?: BusinessSettings::int($businessId, 'margin_main', 25));
             $lines = [];
             $subtotal = 0;
             $costTotal = 0;
@@ -51,7 +54,7 @@ class SaleService
                     throw new RuntimeException("Stock insuficiente de {$product->name}.");
                 }
 
-                $effectiveMargin = $marginPct ?: ($product->margin_pct ?: config('llantera.margin_main'));
+                $effectiveMargin = $marginPct?: ($product->margin_pct ?: BusinessSettings::int($businessId, 'margin_main', 25));
                 $unitPrice = Money::withMargin($product->cost_cents, $effectiveMargin);
                 $lineTotal = $unitPrice * $qty;
                 $lineCost = $product->cost_cents * $qty;
@@ -81,36 +84,37 @@ class SaleService
             }
 
             $discount = min((int) ($data['discount_cents'] ?? 0), $subtotal);
-            $base     = $subtotal - $discount;
+$base     = $subtotal - $discount;
 
-            $method = $data['payment_method'] ?? 'efectivo';
-            $cardFee = $method === 'tarjeta'
-                ? Money::percent($base, config('llantera.card_fee_pct'))
-                : 0;
+// El precio negociado reemplaza a la base
+$overridden = false;
+$reason     = null;
 
-            $total = $base + $cardFee;
-
-            $overridden = false;
-            $reason = null;
-            
-            if (isset($data['override_total_cents']) && $data['override_total_cents'] !== null) {
-            $total      = (int) $data['override_total_cents'];
-            $overridden = true;
-            $reason     = $data['override_reason'] ?? null;
+if (isset($data['override_total_cents']) && $data['override_total_cents'] !== null) {
+    $base       = (int) $data['override_total_cents'];
+    $overridden = true;
+    $reason     = $data['override_reason'] ?? null;
 }
-                
-                $income = $total - $cardFee;
-                $margin = $income - $costTotal;
-                
-                $received = (int) ($data['received_cents'] ?? $total);
-                if($method === 'efectivo' && $received < $total){
-                    throw new RuntimeException ('El monto recibido es menor al total de la venta');
-                }
+
+$method  = $data['payment_method'] ?? 'efectivo';
+$cardFee = $method === 'tarjeta'
+    ? Money::percent($base, BusinessSettings::int($businessId, 'card_fee_pct', 15))
+    : 0;
+
+$total  = $base + $cardFee;
+$income = $total - $cardFee;
+$margin = $income - $costTotal;
+
+$received = (int) ($data['received_cents'] ?? $total);
+
+if ($method === 'efectivo' && $received < $total) {
+    throw new RuntimeException('El monto recibido es menor al total de la venta.');
+}
                 
             $sale = Sale::create([
                 'business_id'           => $businessId,
                 'user_id'               => $userId,
-                'cash_session_id'       => $session->id,
+                'cash_session_id'       => $session?->id,
                 'number'                => $this->nextNumber($businessId),
                 'sold_at'               => now(),
                 'customer_name'         => $data['customer']['name'] ?? 'Consumidor Final',
