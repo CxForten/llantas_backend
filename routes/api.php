@@ -20,7 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('products', ProductController::class);
     Route::get('products/{product}/kardex', [ProductController::class, 'kardex']);
     Route::post('stock/adjust',             [StockController::class, 'adjust']);
-
+    Route::get('stock/movements', [StockController::class, 'movements']);
     Route::get('stock/movements', [StockController::class, 'movements']);
     
     Route::apiResource('sales', SaleController::class)->only(['index', 'store', 'show']);

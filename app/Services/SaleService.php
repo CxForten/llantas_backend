@@ -92,6 +92,7 @@ class SaleService
 
             $overridden = false;
             $reason = null;
+            
             if (isset($data['override_total_cents']) && $data['override_total_cents'] !== null) {
             $total      = (int) $data['override_total_cents'];
             $overridden = true;

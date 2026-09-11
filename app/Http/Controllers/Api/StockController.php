@@ -48,15 +48,26 @@ class StockController extends Controller
         ]);
     }
 
-    /** Kardex general del negocio, con filtros. */
-    public function movements(Request $request): AnonymousResourceCollection
+     public function movements(Request $request): AnonymousResourceCollection
     {
-        $movements = \App\Models\StockMovement::with('product:id,name,sku', 'user:id,name')
+        $search = trim((string) $request->query('search', ''));
+
+        $movements = \App\Models\StockMovement::with('product:id,name,sku,spec', 'user:id,name')
             ->where('business_id', $request->user()->business_id)
             ->when($request->query('product_id'), fn ($q, $id) => $q->where('product_id', $id))
             ->when($request->query('type'), fn ($q, $type) => $q->where('type', $type))
             ->when($request->query('from'), fn ($q, $from) => $q->where('created_at', '>=', $from))
             ->when($request->query('to'), fn ($q, $to) => $q->where('created_at', '<=', $to))
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('reason', 'like', "%{$search}%")
+                      ->orWhereHas('product', function ($p) use ($search) {
+                          $p->where('name', 'like', "%{$search}%")
+                            ->orWhere('sku', 'like', "%{$search}%")
+                            ->orWhere('spec', 'like', "%{$search}%");
+                      });
+                });
+            })
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->paginate((int) $request->query('per_page', 50));
