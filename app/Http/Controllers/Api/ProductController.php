@@ -55,7 +55,7 @@ class ProductController extends Controller
         ]);
 
         // Si no mandan margen, usamos el de la configuración
-        $product->margin_pct = $data['margin_pct']?? BusinessSettings::int($request->user()->business_id, 'margin_main', 25);
+        $product->margin_pct = $data['margin_pct']?? 0;
 
         $product->recalculatePrices(
             BusinessSettings::int($request->user()->business_id, 'margin_main', 25),

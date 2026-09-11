@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Business;
+use App\Models\Product;
 use App\Support\BusinessSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -62,7 +63,16 @@ class SettingController extends Controller
         }
 
         if (! empty($data['settings'])) {
+            $antes = BusinessSettings::all($businessId);
+
             BusinessSettings::put($businessId, $data['settings']);
+            
+            $ahora = BusinessSettings::all($businessId);
+            
+            if ($antes['margin_main'] !== $ahora['margin_main']
+                || $antes['margin_alt'] !== $ahora['margin_main']){
+                    $this->recalcularPrecios($businessId, $ahora['margin_main'], $ahora['margin_alt']);
+                }
         }
 
         return response()->json([
@@ -70,6 +80,17 @@ class SettingController extends Controller
             'business' => $this->businessPayload($business->fresh()),
             'defaults' => BusinessSettings::all($businessId),
         ]);
+    }
+
+    private function recalcularPrecios(int $businessId, int $main, int $alt): void
+    {
+        Product::where('business_id', $businessId)
+            ->chunkById(200, function ($products) use ($alt, $main) {
+                foreach ($products as $product) {
+                    $product->recalculatePrices($product->margin_pct ?: $main, $alt);
+                    $product->saveQuietly();
+                }
+            });
     }
 
     private function businessPayload(Business $business): array

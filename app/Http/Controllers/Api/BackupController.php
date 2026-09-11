@@ -79,13 +79,27 @@ class BackupController extends Controller
         $tables     = $data['payload']['tables'];
 
         DB::transaction(function () use ($businessId, $tables) {
-            $this->wipe($businessId, 'todo');
+            $this->wipe($businessId, 'restore');
+
+            if (! empty($data['payload']['business'])) {
+                $business = $data['payload']['business'];
+                unset($business['id'], $business['created_at'], $business['update_at']);
+                Business::where('id', $businessId)->update($business);
+            }
 
             foreach (self::TABLES as $name => $model) {
                 foreach ($tables[$name] ?? [] as $row) {
                     // Nunca dejamos que el archivo escoja a qué negocio pertenece
                     if (array_key_exists('business_id', $row)) {
                         $row['business_id'] = $businessId;
+                    }
+
+                    foreach ($row as $key => $value) {
+                        if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}T/', $value)) {
+                            $row[$key] = \Carbon\Carbon::parse($value)
+                                ->setTimezone(config('app.timezone'))
+                                ->format('Y-m-d H:i:s');
+                        }
                     }
 
                     $model::withoutEvents(fn () => $model::insert($row));
@@ -132,14 +146,19 @@ class BackupController extends Controller
         StockMovement::where('business_id', $businessId)->delete();
         CashSession::where('business_id', $businessId)->delete();
 
-        if ($scope === 'todo') {
-            Product::withTrashed()->where('business_id', $businessId)->forceDelete();
-            Category::where('business_id', $businessId)->delete();
-            Customer::where('business_id', $businessId)->delete();
-        } else {
-            // El catálogo se queda, pero el stock vuelve a cero:
-            // si borras el kardex, dejar stock sería mentir.
+        if ($scope === 'ventas') {
             Product::where('business_id', $businessId)->update(['stock' => 0]);
+            return;
         }
+
+        Product::withTrashed()->where('business_id', $businessId)->forceDelete();
+        Category::where('business_id', $businessId)->delete();
+        Customer::where('business_id', $businessId)->delete();
+
+        if ($scope === 'restore') {
+            if ($scope === 'restore'){
+                Setting::where('business_id', $businessId)->delete();
+            }
+        } 
     }
 }

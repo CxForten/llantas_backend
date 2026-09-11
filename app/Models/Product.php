@@ -42,8 +42,8 @@ class Product extends Model
         $main ??= $this->margin_pct ?: config('llantera.margin_main');
         $alt  ??= config('llantera.margin_alt');
 
-        $this->price_cents     = (int) round($this->cost_cents * (1 + $main / 100));
-        $this->price_alt_cents = (int) round($this->cost_cents * (1 + $alt / 100));
+        $this->price_cents     = intdiv($this->cost_cents * (100 + $main) + 50, 100);
+        $this->price_alt_cents = intdiv($this->cost_cents * (100 + $alt) + 50, 100);
     }
 
     public function scopeForBusiness($query, int $businessId)

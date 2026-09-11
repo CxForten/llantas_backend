@@ -8,4 +8,6 @@ return [
 
  
     'calc_order'    => env('LLANTERA_CALC_ORDER', 'discount_first'),
+
+    'require_cash_session' => (bool) env('LLANTERA_REQUIRE_CASH', true),
 ];
